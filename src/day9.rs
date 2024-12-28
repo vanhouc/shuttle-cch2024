@@ -53,12 +53,8 @@ pub async fn refill(State(state): State<Arc<AppState>>) -> axum::response::Respo
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(untagged)]
+#[serde(untagged, deny_unknown_fields)]
 pub enum MilkRequest {
-    Both { gallons: f64, liters: f64 },
-    BothUk { pints: f64, litres: f64 },
-    Combo { gallons: f64, pints: f64 },
-    BothLiters { liters: f64, litres: f64 },
     Gallons { gallons: f64 },
     Liters { liters: f64 },
     Pints { pints: f64 },
