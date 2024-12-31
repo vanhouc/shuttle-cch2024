@@ -1,21 +1,38 @@
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 use axum::{
     extract::{rejection::JsonRejection, State},
     http::StatusCode,
     response::IntoResponse,
+    routing::post,
     Json,
 };
 use leaky_bucket::RateLimiter;
 use serde::{Deserialize, Serialize};
 
-use crate::AppState;
+type LimiterState = Arc<Mutex<RateLimiter>>;
+
+pub fn router() -> axum::Router {
+    axum::Router::new()
+        .route("/milk", post(milk))
+        .route("/refill", post(refill))
+        .with_state(Arc::new(Mutex::new(
+            RateLimiter::builder()
+                .max(5)
+                .initial(5)
+                .interval(Duration::from_secs(1))
+                .build(),
+        )))
+}
 
 pub async fn milk(
-    State(state): State<Arc<AppState>>,
+    State(state): State<LimiterState>,
     quantity: Result<Json<MilkRequest>, JsonRejection>,
 ) -> axum::response::Response {
-    let rate_limiter = &state.rate_limiter.lock().unwrap();
+    let rate_limiter = &state.lock().unwrap();
     if rate_limiter.try_acquire(1) {
         match quantity {
             Ok(Json(MilkRequest::Gallons { gallons })) => Json(MilkRequest::Liters {
@@ -42,8 +59,8 @@ pub async fn milk(
     }
 }
 
-pub async fn refill(State(state): State<Arc<AppState>>) -> axum::response::Response {
-    let mut rate_limiter = state.rate_limiter.lock().unwrap();
+pub async fn refill(State(state): State<LimiterState>) -> axum::response::Response {
+    let mut rate_limiter = state.lock().unwrap();
     *rate_limiter = RateLimiter::builder()
         .max(5)
         .initial(5)
