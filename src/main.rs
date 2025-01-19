@@ -13,7 +13,8 @@ mod day9;
 
 #[shuttle_runtime::main]
 async fn main(
-    #[shuttle_shared_db::Postgres(local_uri = env!("DATABASE_URL"))] pool: sqlx::PgPool,
+    #[shuttle_shared_db::Postgres(local_uri = option_env!("DATABASE_URL").unwrap_or(""))]
+    pool: sqlx::PgPool,
 ) -> shuttle_axum::ShuttleAxum {
     let router = Router::new()
         .route("/", get(day0::hello_bird))
