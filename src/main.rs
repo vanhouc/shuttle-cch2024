@@ -16,6 +16,11 @@ async fn main(
     #[shuttle_shared_db::Postgres(local_uri = option_env!("DATABASE_URL").unwrap_or(""))]
     pool: sqlx::PgPool,
 ) -> shuttle_axum::ShuttleAxum {
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .expect("Failed to run migrations");
+
     let router = Router::new()
         .route("/", get(day0::hello_bird))
         .route("/-1/seek", get(day0::the_word))
