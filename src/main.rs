@@ -6,12 +6,15 @@ use axum::{
 mod day0;
 mod day12;
 mod day16;
+mod day19;
 mod day2;
 mod day5;
 mod day9;
 
 #[shuttle_runtime::main]
-async fn main() -> shuttle_axum::ShuttleAxum {
+async fn main(
+    #[shuttle_shared_db::Postgres(local_uri = env!("DATABASE_URL"))] pool: sqlx::PgPool,
+) -> shuttle_axum::ShuttleAxum {
     let router = Router::new()
         .route("/", get(day0::hello_bird))
         .route("/-1/seek", get(day0::the_word))
@@ -22,7 +25,8 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         .route("/5/manifest", post(day5::manifest))
         .nest("/9", day9::router())
         .nest("/12", day12::router())
-        .nest("/16", day16::router());
+        .nest("/16", day16::router())
+        .nest("/19", day19::router(pool));
 
     Ok(router.into())
 }
