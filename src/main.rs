@@ -2,12 +2,15 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use axum_embed::ServeEmbed;
+use rust_embed::RustEmbed;
 
 mod day0;
 mod day12;
 mod day16;
 mod day19;
 mod day2;
+mod day23;
 mod day5;
 mod day9;
 
@@ -32,7 +35,13 @@ async fn main(
         .nest("/9", day9::router())
         .nest("/12", day12::router())
         .nest("/16", day16::router())
-        .nest("/19", day19::router(pool));
+        .nest("/19", day19::router(pool))
+        .nest("/23", day23::router())
+        .nest_service("/assets", ServeEmbed::<Assets>::new());
 
     Ok(router.into())
 }
+
+#[derive(RustEmbed, Clone)]
+#[folder = "assets/"]
+struct Assets;
